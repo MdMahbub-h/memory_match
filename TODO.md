@@ -1,0 +1,1 @@
+create white small different shapes and then use them for emitter
