@@ -7,7 +7,7 @@ class HomePage extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    this.scene.start("GamePage");
+    // this.scene.start("GamePage");
     // Background color
 
     this.addParticles(width, height);
@@ -264,3 +264,4 @@ class HomePage extends Phaser.Scene {
 }
 
 export default HomePage;
+
