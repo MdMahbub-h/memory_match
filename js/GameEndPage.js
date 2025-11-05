@@ -3,11 +3,177 @@ class GameEndPage extends Phaser.Scene {
     super({ key: "GameEndPage" });
   }
 
-  init(data) {}
+  init(data) {
+    this.win = data.win || false;
+    this.mismatches = data.mismatches || 0;
+  }
 
   create() {
-    this.addParticles();
-    this.footer();
+    const width = 2160;
+    const height = 3840;
+    this.addParticles(width, height);
+
+    // Logo at top with fade-in animation
+    const logo = this.add.image(width / 2, height * 0.1, "logo");
+    logo.setScale(0.6);
+    logo.alpha = 0;
+    this.tweens.add({
+      targets: logo,
+      alpha: 1,
+      duration: 1000,
+      ease: "Power2",
+    });
+
+    // Eye-catching popup with scale-in animation
+    // const popupGraphics = this.add.graphics();
+    // popupGraphics.fillStyle(0xffffff, 1);
+    // popupGraphics.fillRoundedRect(
+    //   width / 2 - 800,
+    //   height * 0.3,
+    //   1600,
+    //   1200,
+    //   100
+    // );
+    // popupGraphics.alpha = 0;
+    // popupGraphics.scaleX = 0.5;
+    // popupGraphics.scaleY = 0.5;
+    // this.tweens.add({
+    //   targets: popupGraphics,
+    //   alpha: 1,
+    //   scaleX: 1,
+    //   scaleY: 1,
+    //   duration: 800,
+    //   ease: "Back.easeOut",
+    //   delay: 500,
+    // });
+
+    // Win/Lose text with bounce animation
+    const resultText = this.add.text(
+      width / 2,
+      height * 0.45,
+      this.win ? "You Win!" : "You Lose!",
+      {
+        fontFamily: "font2",
+        fontSize: "280px",
+        fontStyle: "bold",
+        color: "#ffffff",
+      }
+    );
+    resultText.setOrigin(0.5);
+    resultText.alpha = 0;
+    resultText.scaleX = 0.5;
+    resultText.scaleY = 0.5;
+    this.tweens.add({
+      targets: resultText,
+      alpha: 1,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 600,
+      ease: "Bounce.easeOut",
+      delay: 1000,
+    });
+
+    // Matching Pairs
+    // const matchingPairsText = this.add.text(
+    //   width / 2,
+    //   height * 0.55,
+    //   `Matching Pairs: ${8 - this.mismatches}`,
+    //   {
+    //     fontFamily: "font2",
+    //     fontSize: "80px",
+    //     color: "#072447",
+    //   }
+    // );
+    // matchingPairsText.setOrigin(0.5);
+    // matchingPairsText.alpha = 0;
+    // this.tweens.add({
+    //   targets: matchingPairsText,
+    //   alpha: 1,
+    //   duration: 500,
+    //   delay: 1200,
+    // });
+
+    // Attempts Left
+    const attemptsLeft = Math.max(0, 5 - this.mismatches);
+    const attemptsText = this.add.text(
+      width / 2,
+      height * 0.65,
+      `Attempts Left: ${attemptsLeft}`,
+      {
+        fontFamily: "font2",
+        fontSize: "80px",
+        color: "#072447",
+      }
+    );
+    attemptsText.setOrigin(0.5);
+    attemptsText.alpha = 0;
+    this.tweens.add({
+      targets: attemptsText,
+      alpha: 1,
+      duration: 500,
+      delay: 1400,
+    });
+
+    // Buttons with hover effects
+    const restartButton = this.add.text(width / 2, height * 0.73, "Restart", {
+      fontFamily: "font2",
+      fontSize: "140px",
+      color: "#ffffffff",
+    });
+    restartButton.setOrigin(0.5);
+    restartButton.setInteractive();
+    restartButton.alpha = 0;
+    this.tweens.add({
+      targets: restartButton,
+      alpha: 1,
+      duration: 500,
+      delay: 1600,
+    });
+    restartButton.on("pointerover", () => {
+      restartButton.setScale(1.1);
+    });
+    restartButton.on("pointerout", () => {
+      restartButton.setScale(1);
+    });
+    restartButton.on("pointerdown", () => {
+      this.scene.start("GamePage");
+    });
+
+    const menuButton = this.add.text(width / 2, height * 0.8, "Menu", {
+      fontFamily: "font2",
+      fontSize: "140px",
+      color: "#ffffff",
+    });
+    menuButton.setOrigin(0.5);
+    menuButton.setInteractive();
+    menuButton.alpha = 0;
+    this.tweens.add({
+      targets: menuButton,
+      alpha: 1,
+      duration: 500,
+      delay: 1600,
+    });
+    menuButton.on("pointerover", () => {
+      menuButton.setScale(1.1);
+    });
+    menuButton.on("pointerout", () => {
+      menuButton.setScale(1);
+    });
+    menuButton.on("pointerdown", () => {
+      this.scene.start("HomePage");
+    });
+
+    // Play congrats sound on win
+    if (this.win) {
+      this.sound.play("congrats");
+      // Add particle burst for win
+      this.addWinParticles(width / 2, height * 0.45);
+      setTimeout(() => {
+        this.addWinParticles(width / 2, height * 0.45);
+      }, 500);
+    }
+
+    this.footer(width, height);
   }
   addParticles(width, height) {
     this.cameras.main.setBackgroundColor("#072447");
@@ -95,6 +261,31 @@ class GameEndPage extends Phaser.Scene {
         });
       };
       moveParticle();
+    }
+  }
+
+  addWinParticles(x, y) {
+    for (let i = 0; i < 100; i++) {
+      const particle = this.add.graphics();
+      particle.fillStyle(0xffd700, 1); // Gold color for win
+      particle.fillCircle(0, 0, Phaser.Math.Between(45, 56));
+      particle.setPosition(x, y);
+
+      // Burst effect
+      this.tweens.add({
+        targets: particle,
+        x: x + Phaser.Math.Between(-700, 700),
+        y: y + Phaser.Math.Between(-700, 700),
+        alpha: 0,
+        scaleX: 0,
+        scaleY: 0,
+        duration: 5000,
+        ease: "Power2",
+        delay: Phaser.Math.Between(0, 500),
+        onComplete: () => {
+          particle.destroy();
+        },
+      });
     }
   }
 

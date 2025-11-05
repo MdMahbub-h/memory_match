@@ -4,6 +4,7 @@ class HomePage extends Phaser.Scene {
   }
 
   create() {
+    // this.scene.start("GamePage");
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
@@ -50,7 +51,10 @@ class HomePage extends Phaser.Scene {
         yoyo: true,
         ease: "Power1",
         onComplete: () => {
-          this.scene.start("GamePage");
+          this.cameras.main.fadeOut(500);
+          setTimeout(() => {
+            this.scene.start("GamePage");
+          }, 500);
         },
       });
     });
@@ -264,4 +268,3 @@ class HomePage extends Phaser.Scene {
 }
 
 export default HomePage;
-

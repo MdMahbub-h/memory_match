@@ -6,6 +6,8 @@ class GamePage extends Phaser.Scene {
   }
   variables() {}
   create() {
+    this.cameras.main.fadeIn(500);
+
     let self = this;
     const width = 2160;
     const height = 3840;
@@ -15,18 +17,83 @@ class GamePage extends Phaser.Scene {
     const logo = this.add.image(width / 2, height * 0.1, "logo");
     logo.setScale(0.6); // Adjust scale as needed
 
+    let machingPair = 0;
+    let attempts = 0;
     let solvedTiles = [];
     let rectW = width * 0.85;
     let rectH = height * 0.66;
+
+    // this.scene.start("GameEndPage", {
+    //   win: false,
+    //   mismatches: 8 - machingPair,
+    // });
+
     const graphics = this.add.graphics();
     graphics.fillStyle(0xffffff, 1);
     graphics.fillRoundedRect(
       width / 2 - rectW / 2,
-      height * 0.55 - rectH / 2,
+      height * 0.61 - rectH / 2,
       rectW,
       rectH,
       100
     );
+
+    const machingPairBox = this.add.graphics();
+    machingPairBox.fillStyle(0xffffff, 1);
+    machingPairBox.fillRoundedRect(
+      width * 0.1,
+      height * 0.2 - 40,
+      650,
+      260,
+      130
+    );
+    const matchingPairsTitle = this.add
+      .text(width * 0.1 + 650 / 2, height * 0.2 - 10, "Matching Pairs", {
+        fontFamily: "font2",
+        fontSize: "60px",
+        fontStyle: "bold",
+        color: "#072447",
+      })
+      .setOrigin(0.5, 0);
+    const attemptsBox = this.add.graphics();
+    attemptsBox.fillStyle(0xffffff, 1);
+    attemptsBox.fillRoundedRect(
+      width * 0.9 - 650,
+      height * 0.2 - 40,
+      650,
+      260,
+      130
+    );
+    const attemptsTitle = this.add
+      .text(width * 0.9 - 650 / 2, height * 0.2 - 10, "Attempts", {
+        fontFamily: "font2",
+        fontSize: "60px",
+        fontStyle: "bold",
+        color: "#072447",
+      })
+      .setOrigin(0.5, 0);
+
+    const matchingPairsText = this.add
+      .text(width * 0.1 + 650 / 2, height * 0.2 + 80, machingPair, {
+        fontFamily: "font2",
+        fontSize: "90px",
+        fontStyle: "bold",
+        color: "#072447",
+      })
+      .setOrigin(0.5, 0);
+    const attemptsText = this.add
+      .text(
+        width * 0.9 - 650 / 2,
+        height * 0.2 + 80,
+        `${attempts}/5 ${"🟊".repeat(5 - attempts)}`,
+        {
+          fontFamily: "font2",
+          fontSize: "90px",
+          fontStyle: "bold",
+          color: "#072447",
+        }
+      )
+      .setOrigin(0.5, 0);
 
     let local_cur_time = 0;
     let stage_data = { col: 4, row: 4, max: 0 };
@@ -38,7 +105,7 @@ class GamePage extends Phaser.Scene {
     let spaceX = width * 0.2;
     let spaceY = 600;
     let start_x = width * 0.2;
-    let start_y = height * 0.32;
+    let start_y = height * 0.38;
     let index = 0;
     let animate_flip_on_start = false; // Reveal tile on start
     let flip_count = 0;
@@ -112,24 +179,24 @@ class GamePage extends Phaser.Scene {
     // progress.setOrigin(0, 0.5);
     // progress.scaleX = local_cur_time / max_timer;
     // Timer
-    let timer_interval = this.time.addEvent({
-      delay: timer_delay,
-      loop: true,
-      callback: () => {
-        if (state == "play") {
-          if (local_cur_time > 0) {
-            local_cur_time -= sub_timer;
-            cur_time = local_cur_time;
-            if (local_cur_time < 0) {
-              local_cur_time = 0;
-            }
-            // progress.scaleX = local_cur_time / max_timer;
-          } else {
-            gameover();
-          }
-        }
-      },
-    });
+    // let timer_interval = this.time.addEvent({
+    //   delay: timer_delay,
+    //   loop: true,
+    //   callback: () => {
+    //     if (state == "play") {
+    //       if (local_cur_time > 0) {
+    //         local_cur_time -= sub_timer;
+    //         cur_time = local_cur_time;
+    //         if (local_cur_time < 0) {
+    //           local_cur_time = 0;
+    //         }
+    //         // progress.scaleX = local_cur_time / max_timer;
+    //       } else {
+    //         gameover();
+    //       }
+    //     }
+    //   },
+    // });
     this.input.on(
       "gameobjectdown",
       (pointer, obj) => {
@@ -192,13 +259,15 @@ class GamePage extends Phaser.Scene {
       target2.scaleX = 0;
       self.tweens.add({
         targets: target1,
+        scaleY: tile_scale * 1.2,
         scaleX: 0,
-        duration: 100,
+        duration: 200,
         onComplete: () => {
           self.tweens.add({
             targets: target2,
             scaleX: tile_scale,
-            duration: 100,
+            scaleY: tile_scale,
+            duration: 200,
             onComplete: () => {
               obj.scaleX = tile_scale;
               if (type == "open") {
@@ -223,6 +292,15 @@ class GamePage extends Phaser.Scene {
       });
     }
     function check_match() {
+      attempts += 1;
+      attemptsText.setText(`${attempts}/5 ${"🟊".repeat(5 - attempts)}`);
+      if (attempts >= 5) {
+        self.scene.start("GameEndPage", {
+          win: false,
+          mismatches: 8 - machingPair,
+        });
+      }
+
       if (selected[0].frame == selected[1].frame) {
         remove_tile(selected[0]);
         remove_tile(selected[1]);
@@ -248,9 +326,17 @@ class GamePage extends Phaser.Scene {
       }
     }
     function remove_tile(tile) {
+      attempts -= 1;
+      if (attempts < 0) {
+        attempts = 0;
+      }
+      attemptsText.setText(`${attempts}/5 ${"🟊".repeat(5 - attempts)}`);
       solvedTiles.push(tile);
-      if (solvedTiles.length == 16) {
-        self.scene.start("GameEndPage");
+      if (solvedTiles.length == 10) {
+        this.scene.start("GameEndPage", {
+          win: true,
+          mismatches: 8 - machingPair,
+        });
       }
       // let tile_obj = get_tile(tile.id);
       // for (let i = 0; i < tiles.length; i++) {
@@ -437,8 +523,8 @@ class GamePage extends Phaser.Scene {
   footer(width, height) {
     // Watermark at bottom
     const developedByText = this.add.text(
-      width / 2 - 250,
-      height * 0.96,
+      width / 2 - 240,
+      height * 0.97,
       "Developed By",
       {
         fontFamily: "font2",
@@ -450,8 +536,8 @@ class GamePage extends Phaser.Scene {
     developedByText.setOrigin(0.5);
 
     const footprintLogo = this.add.image(
-      width / 2 + 250,
-      height * 0.96,
+      width / 2 + 240,
+      height * 0.97,
       "footprintLogo"
     );
     footprintLogo.setScale(0.35);
